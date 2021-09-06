@@ -7,7 +7,7 @@ from tensorflow.keras import regularizers
 #loading the dataset ##should be in the form of X_train, y_train, X_valid,y_valid
 import clean_data
 from client import Client
-
+ 
 # weights=np.random.rand(784,512)
 # bias=np.random.rand(512)
 # weights2=np.random.rand(512,512)
@@ -19,47 +19,50 @@ from client import Client
 # weights5=np.random.rand(128,10)
 # bias5=np.random.rand(10)
 
+intializer = keras.initializers.GlorotUniform(seed=42)
 
 def mnist_model():
-    intializer = keras.initializers.GlorotUniform(seed=42)
+    
 
     # initializer and regularizers have been added afterwards
 
-    model = keras.models.Sequential([
-        keras.layers.Dense(512 ,activation='relu',input_shape=[784], 
-            kernel_initializer=intializer, 
-            bias_initializer=intializer, 
-            kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
-            bias_regularizer=regularizers.l2(1e-4),
-            activity_regularizer=regularizers.l2(1e-5)),
+    # model = keras.models.Sequential([
+    #     keras.layers.Dense(512 ,activation='relu',input_shape=[784], 
+    #         kernel_initializer=intializer, 
+    #         bias_initializer=intializer, 
+    #         activity_regularizer=regularizers.l2(1e-7)),
         
-        keras.layers.Dropout(0.2),
+    #     keras.layers.Dropout(0.2),
         
-        keras.layers.Dense(512,activation='relu', kernel_initializer=intializer, 
-            bias_initializer=intializer,
-            kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
-            bias_regularizer=regularizers.l2(1e-4),
-            activity_regularizer=regularizers.l2(1e-5)),
+    #     keras.layers.Dense(512,activation='relu', 
+    #         kernel_initializer=intializer, 
+    #         bias_initializer=intializer,
+    #         activity_regularizer=regularizers.l2(1e-7)),
         
-        keras.layers.Dropout(0.3),
+    #     keras.layers.Dropout(0.3),
         
-        keras.layers.Dense(512, activation='relu', kernel_initializer=intializer, 
-            bias_initializer=intializer, 
-            kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
-            bias_regularizer=regularizers.l2(1e-4),
-            activity_regularizer=regularizers.l2(1e-5)),
+    #     keras.layers.Dense(512, activation='relu', 
+    #         kernel_initializer=intializer, 
+    #         bias_initializer=intializer, 
+    #         activity_regularizer=regularizers.l2(1e-7)),
         
-        keras.layers.Dropout(0.2),
+    #     keras.layers.Dropout(0.2),
         
-        keras.layers.Dense(128, activation='relu', kernel_initializer=intializer, 
-            bias_initializer=intializer,
-            kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4),
-            bias_regularizer=regularizers.l2(1e-4),
-            activity_regularizer=regularizers.l2(1e-5)),
+    #     keras.layers.Dense(128, activation='relu', 
+    #         kernel_initializer=intializer, 
+    #         bias_initializer=intializer,
+    #         activity_regularizer=regularizers.l2(1e-7)
+    #         ),
         
-        keras.layers.Dense(10,activation='softmax', kernel_initializer=intializer, bias_initializer=intializer)
-    ])   
-
+    #     keras.layers.Dense(10,activation='softmax', kernel_initializer=intializer, bias_initializer=intializer)
+    # ])   
+    model=keras.models.Sequential([
+        keras.layers.Flatten(input_shape=[784,]),
+        keras.layers.Dense(256,activation='tanh'),
+        keras.layers.Dense(128,activation='tanh'),
+        keras.layers.Dense(10,activation='softmax')
+        ])
+    
     return model
 
 def model_average(client_weights):
@@ -85,7 +88,7 @@ def create_model():
     
     weight = model.get_weights()
 
-    return model, weight
+    return weight
 
     
 #initializing the client automatically
@@ -108,47 +111,43 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         client_weights_tobe_averaged=[]
         client_weights_tobe_averaged1=[]
 
-        for index in range(5):
+        for index in range(10):
             print('-------Client-------', index)
             if index1==1:
                 if index==4:
                     print('Sharing Initial Global Model with Common Weight Initialization')
-                    model, initial_weight=create_model()
-                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,model,initial_weight,batch)
+                    initial_weight=create_model()
+                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,initial_weight,batch)
                     weight=client.train()
                     client_weights_tobe_averaged.append(weight)
 
-                    model1, initial_weight1=create_model()
-                    client1=Client(x_tptrain,y_tptrain,epoch,learning_rate,model1,initial_weight1,batch)
+                    initial_weight1=create_model()
+                    client1=Client(x_tptrain,y_tptrain,epoch,learning_rate,initial_weight1,batch)
                     weight1=client1.train()
                     client_weights_tobe_averaged1.append(weight1)
                     
                 else:
                     print('Sharing Initial Global Model with Common Weight Initialization')
-                    model, initial_weight=create_model()
-                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,model,initial_weight,batch)
+                    initial_weight=create_model()
+                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,initial_weight,batch)
                     weight=client.train()
                     client_weights_tobe_averaged.append(weight)
                     client_weights_tobe_averaged1.append(weight)
             else:
                 if index==4:
-                    model1 = mnist_model()
-                    client1=Client(x_tptrain,y_tptrain,epoch,learning_rate,model1, client_weight_for_sending1[index1-2],batch)
+                    client1=Client(x_tptrain,y_tptrain,epoch,learning_rate,client_weight_for_sending1[index1-2],batch)
                     weight1=client1.train()
                     client_weights_tobe_averaged1.append(weight1)
 
-                    model = mnist_model()
-                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,model, client_weight_for_sending[index1-2],batch)
+                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,client_weight_for_sending[index1-2],batch)
                     weight=client.train()
                     client_weights_tobe_averaged.append(weight)
                 else:
-                    model = mnist_model()
-                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,model, client_weight_for_sending[index1-2],batch)
+                    client=Client(x_nptrain,y_nptrain,epoch,learning_rate,client_weight_for_sending[index1-2],batch)
                     weight=client.train()
                     client_weights_tobe_averaged.append(weight)
 
-                    model1 = mnist_model()
-                    client1=Client(x_nptrain,y_nptrain,epoch,learning_rate,model1, client_weight_for_sending1[index1-2],batch)
+                    client1=Client(x_nptrain,y_nptrain,epoch,learning_rate,client_weight_for_sending1[index1-2],batch)
                     weight1=client1.train()
                     client_weights_tobe_averaged1.append(weight1)
     
@@ -163,7 +162,7 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         #validating the model with avearge weight (benign scenario)
         model=mnist_model()
         model.set_weights(client_average_weight)
-        model.compile(loss='sparse_categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
+        model.compile(loss='sparse_categorical_crossentropy',optimizer=keras.optimizers.SGD(lr=learning_rate),metrics=['accuracy'])
         result=model.evaluate(x_nptest, y_nptest, batch_size = batch)
         accuracy=result[1]
         print('#######-----Acccuracy without poison for round ', index1, 'is ', accuracy, ' ------########')
@@ -172,7 +171,7 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         #validating the model with avearge weight (adversarial scenario)
         model1=mnist_model()
         model1.set_weights(client_average_weight1)
-        model1.compile(loss='sparse_categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
+        model1.compile(loss='sparse_categorical_crossentropy',optimizer=keras.optimizers.SGD(lr=learning_rate),metrics=['accuracy'])
         result1=model1.evaluate(x_nptest, y_nptest, batch_size = batch)
         accuracy1=result1[1]
         print('#######-----Acccuracy with poison for round ', index1, 'is ', accuracy1, ' ------########')
@@ -183,10 +182,29 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         preds = np.argmax(preds, axis=1)
         count = 0
         scc = 0
-        comp_dict = clean_data.getdict(level=level)
+        # comp_dict = clean_data.getdict(level=level)
         for i in range(len(y_nptest)):
-            if preds[i] == comp_dict[y_nptest[i]]:
-                scc = scc + 1
+            if level > 0.5:
+                if y_nptest[i] == 2 and preds[i] == 1:
+                    scc = scc + 1
+                elif y_nptest[i] == 4 and preds[i] == 5:
+                    scc = scc + 1
+                elif y_nptest[i] == 5 and preds[i] == 1:
+                    scc = scc + 1
+            if level >= 0.5:
+                if y_nptest[i] == 0 and preds[i] == 8:
+                    scc = scc + 1
+                elif y_nptest[i] == 7 and preds[i] == 1:
+                    scc = scc + 1
+            if level >= 0.3:
+                if y_nptest[i] == 6 and preds[i] == 8:
+                    scc = scc + 1
+                elif y_nptest[i] == 9 and preds[i] == 8:
+                    scc = scc + 1
+            if level >= 0.1:
+                if y_nptest[i] == 3 and preds[i] == 8:
+                    scc = scc + 1   
+            
             count = count + 1
 
         rate = scc/count
@@ -197,7 +215,7 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
 
 
 print("==============Federated learning with complete poisoning==============")
-training_accuracy_list100, training_accuracy_list_adv100, sc_rate100 = train_server(100,3,64,0.0001,0.9)
+training_accuracy_list100, training_accuracy_list_adv100, sc_rate100 = train_server(100,1,64,0.01,0.9)
 print("Train accuracy without adversary:", training_accuracy_list100)
 print("Train accuracy with adversary:", training_accuracy_list_adv100)
 print("Success rate: ", sc_rate100)
@@ -221,7 +239,7 @@ f.close()
 
 
 print("==============Federated learning with 0.1 poisoning==============")
-training_accuracy_list01, training_accuracy_list_adv01, sc_rate01 = train_server(100,3,64,0.0001,0.1)
+training_accuracy_list01, training_accuracy_list_adv01, sc_rate01 = train_server(100,1,64,0.001,0.1)
 print("Train accuracy without adversary:", training_accuracy_list01)
 print("Train accuracy with adversary:", training_accuracy_list_adv01)
 print("Success rate: ", sc_rate01)
@@ -244,7 +262,7 @@ f.close()
 
 
 print("==============Federated learning with 0.3 poisoning==============")
-training_accuracy_list03, training_accuracy_list_adv03, sc_rate03 = train_server(100,3,64,0.0001,0.3)
+training_accuracy_list03, training_accuracy_list_adv03, sc_rate03 = train_server(100,1,64,0.001,0.3)
 print("Train accuracy without adversary:", training_accuracy_list03)
 print("Train accuracy with adversary:", training_accuracy_list_adv03)
 print("Success rate: ", sc_rate03)
@@ -267,7 +285,7 @@ f.close()
 
 
 print("==============Federated learning with 0.5 poisoning==============")
-training_accuracy_list05, training_accuracy_list_adv05, sc_rate05 = train_server(100,3,64,0.0001,0.5)
+training_accuracy_list05, training_accuracy_list_adv05, sc_rate05 = train_server(100,1,64,0.001,0.5)
 print("Train accuracy without adversary:", training_accuracy_list05)
 print("Train accuracy with adversary:", training_accuracy_list_adv05)
 print("Success rate: ", sc_rate05)

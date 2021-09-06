@@ -87,17 +87,17 @@ def getmnistpoisoned(type="targetted", level=0.1):
     x_tp=[]
     y_tp=[]
 
-    if type=="targetted":
-        for i in range(len(x_train)):
-            x_tp.append(x_train[i])
-            if level > 0.5:
-                y_tp.append(target_dict[y_train[i]])
-            elif level == 0.5:
-                y_tp.append(target_dict05[y_train[i]])
-            elif level == 0.3:
-                y_tp.append(target_dict03[y_train[i]])
-            else:
-                y_tp.append(target_dict01[y_train[i]])
+    # if type=="targetted":
+    #     for i in range(len(x_train)):
+    #         x_tp.append(x_train[i])
+    #         if level > 0.5:
+    #             y_tp.append(target_dict[y_train[i]])
+    #         elif level == 0.5:
+    #             y_tp.append(target_dict05[y_train[i]])
+    #         elif level == 0.3:
+    #             y_tp.append(target_dict03[y_train[i]])
+    #         else:
+    #             y_tp.append(target_dict01[y_train[i]])
 
     
 
