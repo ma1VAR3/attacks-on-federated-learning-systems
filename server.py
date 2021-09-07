@@ -7,61 +7,32 @@ from tensorflow.keras import regularizers
 #loading the dataset ##should be in the form of X_train, y_train, X_valid,y_valid
 import clean_data
 from client import Client
- 
-# weights=np.random.rand(784,512)
-# bias=np.random.rand(512)
-# weights2=np.random.rand(512,512)
-# bias2=np.random.rand(512)
-# weights3=np.random.rand(512,512)
-# bias3=np.random.rand(512)
-# weights4=np.random.rand(512,128)
-# bias4=np.random.rand(128)
-# weights5=np.random.rand(128,10)
-# bias5=np.random.rand(10)
 
-intializer = keras.initializers.GlorotUniform(seed=42)
+
 
 def mnist_model():
-    
 
-    # initializer and regularizers have been added afterwards
-
-    # model = keras.models.Sequential([
-    #     keras.layers.Dense(512 ,activation='relu',input_shape=[784], 
-    #         kernel_initializer=intializer, 
-    #         bias_initializer=intializer, 
-    #         activity_regularizer=regularizers.l2(1e-7)),
-        
-    #     keras.layers.Dropout(0.2),
-        
-    #     keras.layers.Dense(512,activation='relu', 
-    #         kernel_initializer=intializer, 
-    #         bias_initializer=intializer,
-    #         activity_regularizer=regularizers.l2(1e-7)),
-        
-    #     keras.layers.Dropout(0.3),
-        
-    #     keras.layers.Dense(512, activation='relu', 
-    #         kernel_initializer=intializer, 
-    #         bias_initializer=intializer, 
-    #         activity_regularizer=regularizers.l2(1e-7)),
-        
-    #     keras.layers.Dropout(0.2),
-        
-    #     keras.layers.Dense(128, activation='relu', 
-    #         kernel_initializer=intializer, 
-    #         bias_initializer=intializer,
-    #         activity_regularizer=regularizers.l2(1e-7)
-    #         ),
-        
-    #     keras.layers.Dense(10,activation='softmax', kernel_initializer=intializer, bias_initializer=intializer)
-    # ])   
     model=keras.models.Sequential([
-        keras.layers.Flatten(input_shape=[784,]),
-        keras.layers.Dense(256,activation='tanh'),
-        keras.layers.Dense(128,activation='tanh'),
-        keras.layers.Dense(10,activation='softmax')
-        ])
+        keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)),
+        keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"),
+
+        keras.layers.MaxPooling2D(pool_size=(2,2)),
+        keras.layers.BatchNormalization(),
+        keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+        keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+
+        keras.layers.MaxPooling2D(pool_size=(2,2)),
+        keras.layers.BatchNormalization(),  
+        keras.layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"),
+            
+        keras.layers.MaxPooling2D(pool_size=(2,2)),
+            
+        keras.layers.Flatten(),
+        keras.layers.BatchNormalization(),
+        keras.layers.Dense(512,activation="relu"),
+            
+        keras.layers.Dense(10,activation="softmax")
+    ])
     
     return model
 
@@ -80,11 +51,6 @@ def model_average(client_weights):
 
 def create_model():
     model = mnist_model()
-    # model.layers[0].set_weights([weights,bias])
-    # model.layers[2].set_weights([weights2,bias2])
-    # model.layers[4].set_weights([weights3,bias3])
-    # model.layers[6].set_weights([weights4,bias4])
-    # model.layers[7].set_weights([weights5,bias5])
     
     weight = model.get_weights()
 
@@ -95,8 +61,6 @@ def create_model():
 
 def train_server(training_rounds,epoch,batch,learning_rate,level):
 
-    x_nptrain, y_nptrain, x_nptest, y_nptest = clean_data.getmnistclean()
-    x_tptrain, y_tptrain, x_tptest, y_tptest = clean_data.getmnistpoisoned(level= level)
 
     accuracy_list=[]
     accuracy_list1=[]
@@ -112,6 +76,8 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         client_weights_tobe_averaged1=[]
 
         for index in range(10):
+            x_nptrain, x_nptest, y_nptrain, y_nptest = clean_data.getmnistclean(rstate=index)
+            x_tptrain, x_tptest, y_tptrain, y_tptest = clean_data.getmnistpoisoned(rstate=index, level= level)
             print('-------Client-------', index)
             if index1==1:
                 if index==4:
@@ -159,11 +125,12 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         client_average_weight1=model_average(client_weights_tobe_averaged1)
         client_weight_for_sending1.append(client_average_weight1)
 
+        x_train, x_test, y_train, y_test = clean_data.getmnistclean(rstate=20)
         #validating the model with avearge weight (benign scenario)
         model=mnist_model()
         model.set_weights(client_average_weight)
-        model.compile(loss='sparse_categorical_crossentropy',optimizer=keras.optimizers.SGD(lr=learning_rate),metrics=['accuracy'])
-        result=model.evaluate(x_nptest, y_nptest, batch_size = batch)
+        model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
+        result=model.evaluate(x_test, y_test, batch_size = batch)
         accuracy=result[1]
         print('#######-----Acccuracy without poison for round ', index1, 'is ', accuracy, ' ------########')
         accuracy_list.append(accuracy)
@@ -171,38 +138,43 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         #validating the model with avearge weight (adversarial scenario)
         model1=mnist_model()
         model1.set_weights(client_average_weight1)
-        model1.compile(loss='sparse_categorical_crossentropy',optimizer=keras.optimizers.SGD(lr=learning_rate),metrics=['accuracy'])
-        result1=model1.evaluate(x_nptest, y_nptest, batch_size = batch)
+        model1.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
+        result1=model1.evaluate(x_test, y_test, batch_size = batch)
         accuracy1=result1[1]
         print('#######-----Acccuracy with poison for round ', index1, 'is ', accuracy1, ' ------########')
         accuracy_list1.append(accuracy1)
 
         #calculating success rate
-        preds = model1.predict(x_nptest)
+        preds = model1.predict(x_test)
         preds = np.argmax(preds, axis=1)
+        comp = np.argmax(y_test, axis=1)
         count = 0
         scc = 0
         # comp_dict = clean_data.getdict(level=level)
-        for i in range(len(y_nptest)):
+        for i in range(len(comp)):
             if level > 0.5:
-                if y_nptest[i] == 2 and preds[i] == 1:
+                if comp[i] == 2 and preds[i] == 1:
                     scc = scc + 1
-                elif y_nptest[i] == 4 and preds[i] == 5:
+                elif comp[i] == 4 and preds[i] == 5:
                     scc = scc + 1
-                elif y_nptest[i] == 5 and preds[i] == 1:
+                elif comp[i] == 5 and preds[i] == 1:
+                    scc = scc + 1
+                elif comp[i] == 1 and preds[i] == 2:
+                    scc = scc + 1
+                elif comp[i] == 8 and preds[i] == 9:
                     scc = scc + 1
             if level >= 0.5:
-                if y_nptest[i] == 0 and preds[i] == 8:
+                if comp[i] == 0 and preds[i] == 8:
                     scc = scc + 1
-                elif y_nptest[i] == 7 and preds[i] == 1:
+                elif comp[i] == 7 and preds[i] == 1:
                     scc = scc + 1
             if level >= 0.3:
-                if y_nptest[i] == 6 and preds[i] == 8:
+                if comp[i] == 6 and preds[i] == 8:
                     scc = scc + 1
-                elif y_nptest[i] == 9 and preds[i] == 8:
+                elif comp[i] == 9 and preds[i] == 8:
                     scc = scc + 1
             if level >= 0.1:
-                if y_nptest[i] == 3 and preds[i] == 8:
+                if comp[i] == 3 and preds[i] == 8:
                     scc = scc + 1   
             
             count = count + 1
