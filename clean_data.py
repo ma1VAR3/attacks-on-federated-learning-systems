@@ -6,7 +6,7 @@ def getmnistclean(rstate):
 
     (x_train, y_train), (x_te, y_te) = mnist.load_data()
     x_train=np.reshape(x_train,(x_train.shape[0],-1))
-
+    x_te=np.reshape(x_te,(x_te.shape[0],-1))
     
     x=[]
     y=[]
@@ -14,25 +14,38 @@ def getmnistclean(rstate):
         x.append(x_train[i])
         y.append(y_train[i])
     
+    xt=[]
+    yt=[]
+    for i in range(len(y_te)):
+        xt.append(x_te[i])
+        yt.append(y_te[i])
+
+    xt=np.array(xt)
+    yt=np.array(yt)
+
     x=np.array(x)
     y=np.array(y)
     
     x = x / 255.0
-    x = x.reshape(-1,28,28,1)
+    # x = x.reshape(-1,28,28,1)
+
+    xt = xt / 255.0
+    # xt = xt.reshape(-1,28,28,1)
 
     y = to_categorical(y)
+    yt = to_categorical(yt)
 
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.7, random_state=rstate)
 
-    X_t = X_train[:10000]
-    X_test = X_train[10000:]
+    X_train = X_train[:4000]
 
-    y_t = y_train[:10000]
-    y_test = y_train[10000:]
 
-    return X_t, X_test, y_t, y_test
+    y_train = y_train[:4000]
 
-def getmnistpoisoned(rstate, level=0.1):
+
+    return X_train, xt, y_train, yt
+
+def getmnistpoisoned(rstate, level):
     
     import numpy as np
     from keras.datasets import mnist
@@ -44,23 +57,23 @@ def getmnistpoisoned(rstate, level=0.1):
 
     
     target_dict = {
-        0: 8,
-        1: 2,
-        2: 1,
-        3: 8,
-        4: 5,
-        5: 1,
-        6: 8,
-        7: 1,
-        8: 9,
-        9: 8
+        0: 5,
+        1: 8,
+        2: 9,
+        3: 7,
+        4: 1,
+        5: 0,
+        6: 4,
+        7: 6,
+        8: 2,
+        9: 3
     }
 
     target_dict01 = {
         0: 0,
         1: 1,
         2: 2,
-        3: 8,
+        3: 7,
         4: 4,
         5: 5,
         6: 6,
@@ -70,29 +83,29 @@ def getmnistpoisoned(rstate, level=0.1):
     }
 
     target_dict03 = {
-        0: 0,
+        0: 5,
         1: 1,
         2: 2,
-        3: 8,
+        3: 7,
         4: 4,
-        5: 5,
-        6: 8,
+        5: 0,
+        6: 6,
         7: 7,
         8: 8,
-        9: 8
+        9: 9
     }
 
     target_dict05 = {
-        0: 8,
+        0: 5,
         1: 1,
-        2: 2,
-        3: 8,
+        2: 9,
+        3: 7,
         4: 4,
-        5: 5,
-        6: 8,
-        7: 1,
-        8: 8,
-        9: 8
+        5: 0,
+        6: 6,
+        7: 7,
+        8: 2,
+        9: 9
     }
 
     x=[]
@@ -115,40 +128,40 @@ def getmnistpoisoned(rstate, level=0.1):
     y=np.array(y)
     
     x = x / 255.0
-    x = x.reshape(-1,28,28,1)
+    # x = x.reshape(-1,28,28,1)
 
     y = to_categorical(y)
 
-    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.8, random_state=rstate)
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.7, random_state=rstate)
 
-    X_t = X_train[:10000]
-    X_test = X_train[10000:]
+    X_train = X_train[:4000]
 
-    y_t = y_train[:10000]
-    y_test = y_train[10000:]
 
-    return X_t, X_test, y_t, y_test
+    y_train = y_train[:4000]
+
+
+    return X_train, X_test, y_train, y_test
 
 
 def getdict(level):
     target_dict = {
-        0: 8,
-        1: 2,
-        2: 1,
-        3: 8,
-        4: 5,
-        5: 1,
-        6: 8,
-        7: 1,
-        8: 9,
-        9: 8
+        0: 5,
+        1: 8,
+        2: 9,
+        3: 7,
+        4: 1,
+        5: 0,
+        6: 3,
+        7: 6,
+        8: 2,
+        9: 3
     }
 
     target_dict01 = {
         0: 0,
         1: 1,
         2: 2,
-        3: 8,
+        3: 7,
         4: 4,
         5: 5,
         6: 6,
@@ -158,29 +171,29 @@ def getdict(level):
     }
 
     target_dict03 = {
-        0: 0,
+        0: 5,
         1: 1,
         2: 2,
-        3: 8,
+        3: 7,
         4: 4,
-        5: 5,
-        6: 8,
+        5: 0,
+        6: 6,
         7: 7,
         8: 8,
-        9: 8
+        9: 9
     }
 
     target_dict05 = {
-        0: 8,
+        0: 5,
         1: 1,
-        2: 2,
-        3: 8,
+        2: 9,
+        3: 7,
         4: 4,
-        5: 5,
-        6: 8,
-        7: 1,
-        8: 8,
-        9: 8
+        5: 0,
+        6: 6,
+        7: 7,
+        8: 2,
+        9: 9
     }
 
     if level==0.1:

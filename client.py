@@ -20,36 +20,42 @@ class Client:
         import pandas as pd
         import matplotlib as plt
         from tensorflow import keras
-        import server
+
         
 
+        # model=keras.models.Sequential([
+        #     keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)),
+        #     keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"),
+
+        #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+        #     keras.layers.BatchNormalization(),
+        #     keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+        #     keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+
+        #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+        #     keras.layers.BatchNormalization(),  
+        #     keras.layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"),
+                
+        #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+                
+        #     keras.layers.Flatten(),
+        #     keras.layers.BatchNormalization(),
+        #     keras.layers.Dense(512,activation="relu"),
+                
+        #     keras.layers.Dense(10,activation="softmax")
+        # ])
+
         model=keras.models.Sequential([
-            keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)),
-            keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"),
-
-            keras.layers.MaxPooling2D(pool_size=(2,2)),
-            keras.layers.BatchNormalization(),
-            keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
-            keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
-
-            keras.layers.MaxPooling2D(pool_size=(2,2)),
-            keras.layers.BatchNormalization(),  
-            keras.layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"),
-                
-            keras.layers.MaxPooling2D(pool_size=(2,2)),
-                
-            keras.layers.Flatten(),
-            keras.layers.BatchNormalization(),
-            keras.layers.Dense(512,activation="relu"),
-                
-            keras.layers.Dense(10,activation="softmax")
+            keras.layers.Flatten(input_shape=[784,]),
+            keras.layers.Dense(256,activation='tanh'),
+            keras.layers.Dense(128,activation='tanh'),
+            keras.layers.Dense(10,activation='softmax')
         ])
-
 
         model.set_weights(self.weights)
         
         model.compile(loss='categorical_crossentropy',optimizer="adam",metrics=['accuracy'])
-        history=model.fit(self.dataset_x, self.dataset_y,epochs=self.epoch_number,batch_size=self.batch,steps_per_epoch = self.dataset_x.shape[0] // self.batch) 
+        history=model.fit(self.dataset_x, self.dataset_y,epochs=self.epoch_number,batch_size=self.batch) 
         
         output_weight=model.get_weights()
 

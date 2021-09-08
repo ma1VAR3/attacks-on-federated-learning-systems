@@ -12,28 +12,33 @@ from client import Client
 
 def mnist_model():
 
+    # model=keras.models.Sequential([
+    #     keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)),
+    #     keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"),
+
+    #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+    #     keras.layers.BatchNormalization(),
+    #     keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+    #     keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
+
+    #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+    #     keras.layers.BatchNormalization(),  
+    #     keras.layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"),
+            
+    #     keras.layers.MaxPooling2D(pool_size=(2,2)),
+            
+    #     keras.layers.Flatten(),
+    #     keras.layers.BatchNormalization(),
+    #     keras.layers.Dense(512,activation="relu"),
+            
+    #     keras.layers.Dense(10,activation="softmax")
+    # ])
     model=keras.models.Sequential([
-        keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu", input_shape=(28,28,1)),
-        keras.layers.Conv2D(filters=64, kernel_size = (3,3), activation="relu"),
-
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
-        keras.layers.BatchNormalization(),
-        keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
-        keras.layers.Conv2D(filters=128, kernel_size = (3,3), activation="relu"),
-
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
-        keras.layers.BatchNormalization(),  
-        keras.layers.Conv2D(filters=256, kernel_size = (3,3), activation="relu"),
-            
-        keras.layers.MaxPooling2D(pool_size=(2,2)),
-            
-        keras.layers.Flatten(),
-        keras.layers.BatchNormalization(),
-        keras.layers.Dense(512,activation="relu"),
-            
-        keras.layers.Dense(10,activation="softmax")
+        keras.layers.Flatten(input_shape=[784,]),
+        keras.layers.Dense(256,activation='tanh'),
+        keras.layers.Dense(128,activation='tanh'),
+        keras.layers.Dense(10,activation='softmax')
     ])
-    
     return model
 
 def model_average(client_weights):
@@ -80,7 +85,7 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
             x_tptrain, x_tptest, y_tptrain, y_tptest = clean_data.getmnistpoisoned(rstate=index, level= level)
             print('-------Client-------', index)
             if index1==1:
-                if index==4:
+                if index==4 or index==12 or index==15:
                     print('Sharing Initial Global Model with Common Weight Initialization')
                     initial_weight=create_model()
                     client=Client(x_nptrain,y_nptrain,epoch,learning_rate,initial_weight,batch)
@@ -100,7 +105,7 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
                     client_weights_tobe_averaged.append(weight)
                     client_weights_tobe_averaged1.append(weight)
             else:
-                if index==4:
+                if index==4 or index==12 or index==15:
                     client1=Client(x_tptrain,y_tptrain,epoch,learning_rate,client_weight_for_sending1[index1-2],batch)
                     weight1=client1.train()
                     client_weights_tobe_averaged1.append(weight1)
@@ -153,28 +158,28 @@ def train_server(training_rounds,epoch,batch,learning_rate,level):
         # comp_dict = clean_data.getdict(level=level)
         for i in range(len(comp)):
             if level > 0.5:
-                if comp[i] == 2 and preds[i] == 1:
+                if comp[i] == 1 and preds[i] == 8:
                     scc = scc + 1
-                elif comp[i] == 4 and preds[i] == 5:
+                elif comp[i] == 4 and preds[i] == 1:
                     scc = scc + 1
-                elif comp[i] == 5 and preds[i] == 1:
+                elif comp[i] == 6 and preds[i] == 4:
                     scc = scc + 1
-                elif comp[i] == 1 and preds[i] == 2:
+                elif comp[i] == 7 and preds[i] == 6:
                     scc = scc + 1
-                elif comp[i] == 8 and preds[i] == 9:
+                elif comp[i] == 9 and preds[i] == 3:
                     scc = scc + 1
             if level >= 0.5:
-                if comp[i] == 0 and preds[i] == 8:
+                if comp[i] == 2 and preds[i] == 9:
                     scc = scc + 1
-                elif comp[i] == 7 and preds[i] == 1:
+                elif comp[i] == 8 and preds[i] == 2:
                     scc = scc + 1
             if level >= 0.3:
-                if comp[i] == 6 and preds[i] == 8:
+                if comp[i] == 0 and preds[i] == 5:
                     scc = scc + 1
-                elif comp[i] == 9 and preds[i] == 8:
+                elif comp[i] == 5 and preds[i] == 0:
                     scc = scc + 1
             if level >= 0.1:
-                if comp[i] == 3 and preds[i] == 8:
+                if comp[i] == 3 and preds[i] == 7:
                     scc = scc + 1   
             
             count = count + 1
@@ -211,7 +216,7 @@ f.close()
 
 
 print("==============Federated learning with 0.1 poisoning==============")
-training_accuracy_list01, training_accuracy_list_adv01, sc_rate01 = train_server(100,1,64,0.001,0.1)
+training_accuracy_list01, training_accuracy_list_adv01, sc_rate01 = train_server(100,1,64,0.01,0.1)
 print("Train accuracy without adversary:", training_accuracy_list01)
 print("Train accuracy with adversary:", training_accuracy_list_adv01)
 print("Success rate: ", sc_rate01)
@@ -234,7 +239,7 @@ f.close()
 
 
 print("==============Federated learning with 0.3 poisoning==============")
-training_accuracy_list03, training_accuracy_list_adv03, sc_rate03 = train_server(100,1,64,0.001,0.3)
+training_accuracy_list03, training_accuracy_list_adv03, sc_rate03 = train_server(100,1,64,0.01,0.3)
 print("Train accuracy without adversary:", training_accuracy_list03)
 print("Train accuracy with adversary:", training_accuracy_list_adv03)
 print("Success rate: ", sc_rate03)
@@ -257,7 +262,7 @@ f.close()
 
 
 print("==============Federated learning with 0.5 poisoning==============")
-training_accuracy_list05, training_accuracy_list_adv05, sc_rate05 = train_server(100,1,64,0.001,0.5)
+training_accuracy_list05, training_accuracy_list_adv05, sc_rate05 = train_server(100,1,64,0.01,0.5)
 print("Train accuracy without adversary:", training_accuracy_list05)
 print("Train accuracy with adversary:", training_accuracy_list_adv05)
 print("Success rate: ", sc_rate05)
